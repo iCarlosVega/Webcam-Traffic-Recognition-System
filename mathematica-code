@@ -1,0 +1,44 @@
+Minutes = 60*6; (*10 hours*)
+interval = 60; (*1 minute in seconds*)
+
+
+(*countPeople will have 5 instances of the variables that wil help in \
+the process of counting how many instances of a specified entity \
+happen, in this case cars.*)
+countCars[] := 
+  Module[{image, imageContents, numCars, instances, boxes},
+   (*Takes a photo*)
+   dev = DeviceOpen["Camera"];
+   DeviceConfigure[dev, "RasterSize" -> {1280, 720}];
+   image = DeviceRead[dev];
+   DeviceClose[dev];
+   (*ImageCases outputs an association of how many instances of an \
+Entity are detected in image*)
+   imageContents = 
+    ImageCases[image, Entity["Concept", "Person::93r37"], 
+     AcceptanceThreshold -> .25];
+   (*Takes the amount of instances in imageContent*)
+   numCars = Length[imageContents];
+   (*Boxes highlights the entities detected on the photo*)
+   boxes = 
+    ImageBoundingBoxes[image, Entity["Concept", "Person::93r37"], 
+     AcceptanceThreshold -> .25];
+   (*Uses the boxes function to put the boxes around the entities*)
+   instances = HighlightImage[image, boxes];
+   Return[{numCars, instances}];];
+
+carCount = Table[{count, img} = countCars[];
+   Pause[2];
+   {count, img}, {10}];
+
+Manipulate[
+ DynamicModule[{pictureTaken},
+  	pictureTaken = carCount[[counter, 2]];
+  Column[
+   	{ListPlot[
+     	carCount[[All, 1]],
+     	PlotLabel -> "Number of People Detected",
+     	AxesLabel -> {"Count", "People Count"},
+     	Joined -> True, Mesh -> Full]
+    	, pictureTaken}]], {counter, 1, Length[carCount], 1, 
+  Appearance -> "Labeled"}]
