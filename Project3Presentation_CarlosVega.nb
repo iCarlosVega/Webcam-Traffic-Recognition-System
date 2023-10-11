@@ -1,0 +1,618 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 13.2' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       158,          7]
+NotebookDataLength[     27082,        610]
+NotebookOptionsPosition[     24870,        565]
+NotebookOutlinePosition[     25277,        581]
+CellTagsIndexPosition[     25234,        578]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+
+Cell[CellGroupData[{
+Cell["Project 3 - Car detector", "Title",
+ CellChangeTimes->{{3.893790907727361*^9, 
+  3.893790916703314*^9}},ExpressionUUID->"2044a546-48ea-4bcf-b44f-\
+6b54f3d6151f"],
+
+Cell[CellGroupData[{
+
+Cell["Why this topic", "Section",
+ CellChangeTimes->{{3.8937909494492426`*^9, 
+  3.893790955944225*^9}},ExpressionUUID->"f17b306a-9ce9-4462-beab-\
+27668c0e0b01"],
+
+Cell["\<\
+
+The goal of this project is to build a simple program that can count the \
+number of cars in a frame using Mathematica. This project can be handy for \
+people who are interested in studying car traffic or city planners who want \
+to understand traffic patterns better. This project also lets me learn and \
+better understand how computer vision is used, which is like teaching a \
+computer to \[OpenCurlyDoubleQuote]see\[CloseCurlyDoubleQuote] and understand \
+pictures, and machine learning, which helps computers learn from data without \
+being specifically programmed. Using these in a real-world situation like \
+this can help deepen my understanding of these important areas of computer \
+science.
+
+In today\[CloseCurlyQuote]s world, where cities are becoming \
+\[OpenCurlyDoubleQuote]smarter,\[CloseCurlyDoubleQuote] managing traffic well \
+has become very important. To do this well, we need programs that can \
+understand and monitor how many vehicles are on the roads. Counting cars \
+automatically is an important part of this process.
+
+Ultimately, the aim of this project is to make a program that can correctly \
+count cars from pictures taken by a camera, and then show this count as a \
+graph over time. I hope to learn more about how different things (like how \
+much light there is, how fast the car is moving, or how big the car is) \
+affect how well our program works. The things I learn from this project might \
+help to make even better traffic studying tools in the future.\
+\>", "Text",
+ CellChangeTimes->{{3.893791144859846*^9, 3.8937912305995855`*^9}, {
+  3.8937912931362886`*^9, 
+  3.893791339069376*^9}},ExpressionUUID->"e09b0343-fd54-4394-8aac-\
+58bd6af0c822"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["How the code works", "Section",
+ CellChangeTimes->{{3.893791581997177*^9, 
+  3.893791585029773*^9}},ExpressionUUID->"a2eb2bf7-7e87-4c16-b8db-\
+8e6e19d69b70"],
+
+Cell[TextData[{
+ "\nThe program is primarily composed of two significant portions, one is a \
+function `countCars[]`, and the other is the main part of the program that \
+repeatedly calls this function and visualizes the results.\n\n1. ",
+ StyleBox["countCars[]:",
+  FontWeight->"Bold"],
+ "\n\nThe \[OpenCurlyDoubleQuote]countCars[]\[CloseCurlyDoubleQuote]  \
+function is responsible for taking a picture using a camera, identifying the \
+cars in that picture, and counting the total number of cars. Here\
+\[CloseCurlyQuote]s how it does it:\n\n- Initially, the function opens the \
+camera device (dev = DeviceOpen[\[OpenCurlyDoubleQuote]Camera\
+\[CloseCurlyDoubleQuote]]), sets its configuration for image size \
+(DeviceConfigure[dev, \[OpenCurlyDoubleQuote]RasterSize\
+\[CloseCurlyDoubleQuote] -> {1280, 720}];), captures an image (image = \
+DeviceRead[dev];), and then closes the device (DeviceClose[dev];).\n\n- The \
+captured image is then processed to identify the cars. For this, the function \
+uses \[OpenCurlyDoubleQuote]",
+ "ImageCases\[CloseCurlyDoubleQuote]",
+ " which can recognize objects in images. It\[CloseCurlyQuote]s set up to \
+identify cars (Entity[\[OpenCurlyDoubleQuote]Concept\[CloseCurlyDoubleQuote], \
+\[OpenCurlyDoubleQuote]Auto::p735c\[CloseCurlyDoubleQuote]]) with an \
+acceptance threshold of .25, meaning it will return likely matches that have \
+at least 25% confidence. The number of cars detected is then calculated by \
+counting the number of instances (numCars = Length[imageContents];).\n\n- To \
+visually highlight the detected cars in the image, the function uses \
+\[OpenCurlyDoubleQuote]ImageBoundingBoxes\[CloseCurlyDoubleQuote] to find the \
+rectangles that could encompass each car and then \
+\[OpenCurlyDoubleQuote]HighlightImage\[CloseCurlyDoubleQuote] to draw these \
+boxes on the image (instances = HighlightImage[image, boxes];).\n\n- Finally, \
+the function returns a list consisting of the number of cars detected and the \
+highlighted image.\n"
+}], "Text",
+ CellChangeTimes->{{3.8937916127583137`*^9, 3.8937918162825537`*^9}, 
+   3.8937928065284557`*^9},ExpressionUUID->"f13a3fbf-57f0-4c9c-b665-\
+2307ca10b608"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{
+   RowBox[{"countCars", "[", "]"}], ":=", 
+   RowBox[{"Module", "[", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{
+      "image", ",", "imageContents", ",", "numCars", ",", " ", "instances", 
+       ",", " ", "boxes"}], "}"}], ",", "\[IndentingNewLine]", 
+     RowBox[{"(*", 
+      RowBox[{"Takes", " ", "a", " ", "photo"}], "*)"}], 
+     "\[IndentingNewLine]", 
+     RowBox[{
+      RowBox[{"dev", " ", "=", " ", 
+       RowBox[{"DeviceOpen", "[", "\"\<Camera\>\"", "]"}]}], ";", 
+      "\[IndentingNewLine]", 
+      RowBox[{"DeviceConfigure", "[", 
+       RowBox[{"dev", ",", " ", 
+        RowBox[{"\"\<RasterSize\>\"", "->", 
+         RowBox[{"{", 
+          RowBox[{"1280", ",", "720"}], "}"}]}]}], "]"}], ";", 
+      "\[IndentingNewLine]", 
+      RowBox[{"image", " ", "=", " ", 
+       RowBox[{"DeviceRead", "[", "dev", "]"}]}], ";", "\[IndentingNewLine]", 
+      RowBox[{"DeviceClose", "[", "dev", "]"}], ";", "\[IndentingNewLine]", 
+      RowBox[{"(*", 
+       RowBox[{
+       "ImageCases", " ", "outputs", " ", "an", " ", "association", " ", "of",
+         " ", "how", " ", "many", " ", "instances", " ", "of", " ", "an", " ",
+         "Entity", " ", "are", " ", "detected", " ", "in", " ", "image"}], 
+       "*)"}], "\[IndentingNewLine]", 
+      RowBox[{"imageContents", "=", 
+       RowBox[{"ImageCases", "[", 
+        RowBox[{"image", ",", 
+         RowBox[{"Entity", "[", 
+          RowBox[{"\"\<Concept\>\"", ",", "\"\<Auto::p735c\>\""}], "]"}], ",", 
+         RowBox[{"AcceptanceThreshold", "->", ".25"}]}], "]"}]}], ";", 
+      "\[IndentingNewLine]", 
+      RowBox[{"(*", 
+       RowBox[{
+       "Takes", " ", "the", " ", "amount", " ", "of", " ", "instances", " ", 
+        "in", " ", "imageContent"}], "*)"}], "\[IndentingNewLine]", 
+      RowBox[{"numCars", "=", 
+       RowBox[{"Length", "[", "imageContents", "]"}]}], ";", 
+      "\[IndentingNewLine]", 
+      RowBox[{"(*", 
+       RowBox[{
+       "Boxes", " ", "highlights", " ", "the", " ", "entities", " ", 
+        "detected", " ", "on", " ", "the", " ", "photo"}], "*)"}], 
+      "\[IndentingNewLine]", 
+      RowBox[{"boxes", " ", "=", " ", 
+       RowBox[{"ImageBoundingBoxes", "[", 
+        RowBox[{"image", ",", " ", 
+         RowBox[{"Entity", "[", 
+          RowBox[{"\"\<Concept\>\"", ",", "\"\<Auto::p735c\>\""}], "]"}], ",", 
+         RowBox[{"AcceptanceThreshold", "->", ".25"}]}], "]"}]}], ";", 
+      "\[IndentingNewLine]", 
+      RowBox[{"(*", 
+       RowBox[{
+       "Uses", " ", "the", " ", "boxes", " ", "function", " ", "to", " ", 
+        "put", " ", "the", " ", "boxes", " ", "around", " ", "the", " ", 
+        "entities"}], "*)"}], "\[IndentingNewLine]", 
+      RowBox[{"instances", " ", "=", " ", 
+       RowBox[{"HighlightImage", "[", 
+        RowBox[{"image", ",", " ", "boxes"}], "]"}]}], ";", 
+      "\[IndentingNewLine]", 
+      RowBox[{"Return", "[", 
+       RowBox[{"{", 
+        RowBox[{"numCars", ",", "instances"}], "}"}], "]"}], ";"}]}], "]"}]}],
+   ";"}]], "Input",ExpressionUUID->"363f98f5-ac09-46e6-a185-671563d14a9a"],
+
+Cell[CellGroupData[{
+
+Cell["Main Function", "Subsection",
+ CellChangeTimes->{{3.8937918737598667`*^9, 
+  3.893791875659746*^9}},ExpressionUUID->"a7d0900d-8c12-49ab-af26-\
+4008c8996067"],
+
+Cell["\<\
+The main portion of the program involves using the function countCars[] \
+repeatedly over a specified duration (six hours, in this case) and then \
+visualizing the results.
+
+A loop is created with Table to call the countCars[] function every minute \
+for the next six hours (carCount = Table[{count, img} = countCars[]; \
+Pause[interval]; {count, img}, {Minutes}];).
+
+The Pause[interval] command ensures that the function is called every minute, \
+where interval is set to 60 seconds. The results, including the count of cars \
+and the corresponding image, are stored in the carCount variable.
+
+The last part of the program uses Manipulate and DynamicModule to create an \
+interactive visualization. Here, counter goes from 1 to the length of \
+carCount, and for each value of counter, a plot of the number of cars \
+detected over time is displayed along with the corresponding image.
+
+In this way, the code is able to capture images at regular intervals, detect \
+and count cars in those images, and present the results in an interactive \
+graphical format.
+\
+\>", "Text",
+ CellChangeTimes->{{3.893791886053915*^9, 
+  3.893791890371873*^9}},ExpressionUUID->"f8a8926b-5836-4fc3-8cd8-\
+847341c73499"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{
+   RowBox[{"carCount", "=", 
+    RowBox[{"Table", "[", 
+     RowBox[{
+      RowBox[{
+       RowBox[{
+        RowBox[{"{", 
+         RowBox[{"count", ",", "img"}], "}"}], "=", 
+        RowBox[{"countCars", "[", "]"}]}], ";", "\[IndentingNewLine]", 
+       RowBox[{"Pause", "[", "interval", "]"}], ";", "\[IndentingNewLine]", 
+       RowBox[{"{", 
+        RowBox[{"count", ",", "img"}], "}"}]}], ",", 
+      RowBox[{"{", "Minutes", "}"}]}], "]"}]}], ";"}], 
+  "\[IndentingNewLine]"}], "\n", 
+ RowBox[{"Manipulate", "[", "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{"DynamicModule", "[", 
+    RowBox[{
+     RowBox[{"{", "pictureTaken", "}"}], ",", "\[IndentingNewLine]", "\t", 
+     RowBox[{
+      RowBox[{"pictureTaken", "=", 
+       RowBox[{"carCount", "[", 
+        RowBox[{"[", 
+         RowBox[{"counter", ",", "2"}], "]"}], "]"}]}], ";", 
+      "\[IndentingNewLine]", 
+      RowBox[{"Column", "[", "\[IndentingNewLine]", "\t", 
+       RowBox[{"{", 
+        RowBox[{
+         RowBox[{"ListPlot", "[", "\[IndentingNewLine]", "\t", 
+          RowBox[{
+           RowBox[{"carCount", "[", 
+            RowBox[{"[", 
+             RowBox[{"All", ",", "1"}], "]"}], "]"}], ",", 
+           "\[IndentingNewLine]", "\t", 
+           RowBox[{"PlotLabel", "->", "\"\<Number of Cars Detected\>\""}], 
+           ",", "\[IndentingNewLine]", "\t", 
+           RowBox[{"AxesLabel", "->", 
+            RowBox[{"{", 
+             RowBox[{"\"\<Count\>\"", ",", "\"\<Car Count\>\""}], "}"}]}], 
+           ",", "\[IndentingNewLine]", "\t", 
+           RowBox[{"Joined", "->", "True"}], ",", 
+           RowBox[{"Mesh", "->", "Full"}]}], "]"}], "\[IndentingNewLine]", 
+         "\t", ",", "pictureTaken"}], "}"}], "]"}]}]}], "]"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"counter", ",", "1", ",", 
+     RowBox[{"Length", "[", "carCount", "]"}], ",", "1", ",", 
+     RowBox[{"Appearance", "->", "\"\<Labeled\>\""}]}], "}"}]}], 
+  "]"}]}], "Input",ExpressionUUID->"b475ff0f-0b92-4a68-9d3e-1fc612af2953"]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["The Challenges", "Section",
+ CellChangeTimes->{{3.8937919172773104`*^9, 
+  3.893791924996972*^9}},ExpressionUUID->"ddfcb3f8-af6b-4ec7-956f-\
+0042963a8cad"],
+
+Cell["\<\
+One significant issue was the inability to change the aperture of the camera \
+being used for capturing images. Manipulating the camera\[CloseCurlyQuote]s \
+aperture could have greatly improved the quality of the images, especially \
+under different lighting conditions. The aperture controls the amount of \
+light that reaches the image sensor of the camera. By adjusting the aperture, \
+we could have optimized the images for the car detection process, potentially \
+improving accuracy. However, the Mathematica environment did not provide a \
+built-in feature to alter the aperture settings.
+
+This challenge led to difficulties, particularly under poor lighting \
+conditions, such as at night or in highly contrasted light situations. The \
+fixed aperture setting could not adjust to let more light in under low-light \
+conditions, nor limit the light during overly bright situations. As a result, \
+images captured under these conditions were either too dark or too light, \
+which adversely affected the vehicle detection process. It made \
+distinguishing between vehicles and non-vehicle entities more complex for the \
+detection algorithm, which, in turn, impacted the accuracy of the car count.
+
+Working around this issue required careful consideration of environmental \
+factors when positioning the camera and timing the image captures. It was a \
+learning experience that emphasized the importance of every aspect of image \
+acquisition in computer vision projects. While it was a significant \
+challenge, overcoming it greatly contributed to my understanding of the \
+intricate nature of image processing and computer vision.
+
+The following is a test run that illustrates the issue with the exposure.\
+\>", "Text",
+ CellChangeTimes->{{3.8937920768548365`*^9, 3.893792085566309*^9}, {
+  3.8937921362224617`*^9, 3.8937921582479753`*^9}, {3.8937929014076138`*^9, 
+  3.8937929231363096`*^9}},ExpressionUUID->"5115e663-febc-49e0-9870-\
+d0920d11d5e2"],
+
+Cell[BoxData[
+ TagBox[
+  StyleBox[
+   DynamicModuleBox[{$CellContext`counter$$ = 8, Typeset`show$$ = True, 
+    Typeset`bookmarkList$$ = {}, Typeset`bookmarkMode$$ = "Menu", 
+    Typeset`animator$$, Typeset`animvar$$ = 1, Typeset`name$$ = 
+    "\"untitled\"", Typeset`specs$$ = {{
+      Hold[$CellContext`counter$$], 1, 360, 1}}, Typeset`size$$ = {
+    180., {111.23403309800197`, 116.96596690199804`}}, Typeset`update$$ = 0, 
+    Typeset`initDone$$, Typeset`skipInitDone$$ = True}, 
+    DynamicBox[Manipulate`ManipulateBoxes[
+     1, StandardForm, "Variables" :> {$CellContext`counter$$ = 1}, 
+      "ControllerVariables" :> {}, 
+      "OtherVariables" :> {
+       Typeset`show$$, Typeset`bookmarkList$$, Typeset`bookmarkMode$$, 
+        Typeset`animator$$, Typeset`animvar$$, Typeset`name$$, 
+        Typeset`specs$$, Typeset`size$$, Typeset`update$$, Typeset`initDone$$,
+         Typeset`skipInitDone$$}, "Body" :> 
+      DynamicModule[{$CellContext`pictureTaken}, $CellContext`pictureTaken = 
+         Part[$CellContext`carCount, $CellContext`counter$$, 2]; Column[{
+           ListPlot[
+            Part[$CellContext`carCount, All, 1], PlotLabel -> 
+            "Number of Cars Detected", AxesLabel -> {"Count", "Car Count"}, 
+            Joined -> True, Mesh -> Full], $CellContext`pictureTaken}]], 
+      "Specifications" :> {{$CellContext`counter$$, 1, 360, 1, Appearance -> 
+         "Labeled"}}, "Options" :> {}, "DefaultOptions" :> {}],
+     ImageSizeCache->{304., {165.13403309800196`, 170.86596690199804`}},
+     SingleEvaluation->True],
+    Deinitialization:>None,
+    DynamicModuleValues:>{},
+    SynchronousInitialization->True,
+    UndoTrackedVariables:>{Typeset`show$$, Typeset`bookmarkMode$$},
+    UnsavedVariables:>{Typeset`initDone$$},
+    UntrackedVariables:>{Typeset`size$$}], "Manipulate",
+   Deployed->True,
+   StripOnInput->False],
+  Manipulate`InterpretManipulate[1]]], "Input",
+ CellChangeTimes->{{3.893792888288927*^9, 
+  3.8937928995271173`*^9}},ExpressionUUID->"d95e4cd8-58c6-4c7b-8ee6-\
+e403c2ce256d"],
+
+Cell[CellGroupData[{
+
+Cell["Associations and why they caused an issue", "Subsection",
+ CellChangeTimes->{{3.893792426958229*^9, 
+  3.893792434944157*^9}},ExpressionUUID->"5e167a21-a9c2-4e99-a47a-\
+f2d93adefa4f"],
+
+Cell["\<\
+Another challenge I encountered during the project was with the \
+\[OpenCurlyDoubleQuote]ImagePosition[]\[CloseCurlyDoubleQuote] function. This \
+function was returning an association rather than a list, which was not \
+aligning with the format I was expecting for the rest of my program. 
+
+In Mathematica, an association is a key-value data structure, much like \
+dictionaries in Python or Hashmaps in Java. While associations can hold and \
+manage complex data structures efficiently, they become challenging when data \
+needs to be processed or manipulated in a different format, like a list in \
+this case.
+
+The issue was significant because associations and lists behave differently. \
+You can directly access list elements by their index, but with associations, \
+you need to know the corresponding key to reach the desired value. Since I \
+required a list and not an association, I had to think of an alternative \
+approach. To overcome this, I modified my approach and decided to use the \
+\[OpenCurlyDoubleQuote]ImageCases\[CloseCurlyDoubleQuote] function instead of \
+\[OpenCurlyDoubleQuote]ImagePosition\[CloseCurlyDoubleQuote]. \
+\[OpenCurlyDoubleQuote]ImageCases\[CloseCurlyDoubleQuote] is designed to \
+identify instances of a particular entity, in this case, cars, within an \
+image. By setting it up to identify only cars \
+(`Entity[\[OpenCurlyDoubleQuote]Concept\[CloseCurlyDoubleQuote], \
+\[OpenCurlyDoubleQuote]Auto::p735c\[CloseCurlyDoubleQuote]]`) and then \
+calculating the number of cars detected using \[OpenCurlyDoubleQuote]Length\
+\[CloseCurlyDoubleQuote], I was able to obtain the desired list format.
+
+This workaround allowed me to bypass the issue I was having with \
+\[OpenCurlyDoubleQuote]ImagePosition\[CloseCurlyDoubleQuote] returning an \
+association. It provided me with a list of counts representing the number of \
+cars detected in each image, which was exactly what I needed for my program.\
+\>", "Text",
+ CellChangeTimes->{{3.8937924434640694`*^9, 
+  3.8937926014982724`*^9}},ExpressionUUID->"6a0afb2a-2a21-4b50-b060-\
+4b5bf0cc4f87"]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Demonstration", "Section",
+ CellChangeTimes->{{3.89379284327684*^9, 
+  3.8937928459438367`*^9}},ExpressionUUID->"e4756f87-10a0-45ec-9244-\
+017d05f0a4f6"],
+
+Cell["\<\
+I made  a small change to detect people so I could demonstrate how the \
+program was intended to work. Instead of cars It detects people\
+\>", "Text",
+ CellChangeTimes->{{3.8937929476594267`*^9, 
+  3.893792986492437*^9}},ExpressionUUID->"633cda0b-4b78-4a12-baa2-\
+ceeb1926cb57"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{
+   RowBox[{"Minutes", "=", 
+    RowBox[{"60", "*", "6"}]}], ";"}], " ", 
+  RowBox[{"(*", 
+   RowBox[{"10", " ", "hours"}], "*)"}]}], "\n", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"interval", "=", "60"}], ";"}], " ", 
+  RowBox[{"(*", 
+   RowBox[{"1", " ", "minute", " ", "in", " ", "seconds"}], "*)"}], 
+  "\[IndentingNewLine]", "\[IndentingNewLine]", "\[IndentingNewLine]", 
+  RowBox[{"(*", 
+   RowBox[{
+    RowBox[{
+    "countPeople", " ", "will", " ", "have", " ", "5", " ", "instances", " ", 
+     "of", " ", "the", " ", "variables", " ", "that", " ", "wil", " ", "help",
+      " ", "in", " ", "the", " ", "process", " ", "of", " ", "counting", " ", 
+     "how", " ", "many", " ", "instances", " ", "of", " ", "a", " ", 
+     "specified", " ", "entity", " ", "happen"}], ",", " ", 
+    RowBox[{"in", " ", "this", " ", "case", " ", 
+     RowBox[{"cars", "."}]}]}], "*)"}]}], "\n", 
+ RowBox[{
+  RowBox[{
+   RowBox[{
+    RowBox[{"countCars", "[", "]"}], ":=", 
+    RowBox[{"Module", "[", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{
+       "image", ",", "imageContents", ",", "numCars", ",", " ", "instances", 
+        ",", " ", "boxes"}], "}"}], ",", "\[IndentingNewLine]", 
+      RowBox[{"(*", 
+       RowBox[{"Takes", " ", "a", " ", "photo"}], "*)"}], 
+      "\[IndentingNewLine]", 
+      RowBox[{
+       RowBox[{"dev", " ", "=", " ", 
+        RowBox[{"DeviceOpen", "[", "\"\<Camera\>\"", "]"}]}], ";", 
+       "\[IndentingNewLine]", 
+       RowBox[{"DeviceConfigure", "[", 
+        RowBox[{"dev", ",", " ", 
+         RowBox[{"\"\<RasterSize\>\"", "->", 
+          RowBox[{"{", 
+           RowBox[{"1280", ",", "720"}], "}"}]}]}], "]"}], ";", 
+       "\[IndentingNewLine]", 
+       RowBox[{"image", " ", "=", " ", 
+        RowBox[{"DeviceRead", "[", "dev", "]"}]}], ";", "\[IndentingNewLine]", 
+       RowBox[{"DeviceClose", "[", "dev", "]"}], ";", "\[IndentingNewLine]", 
+       RowBox[{"(*", 
+        RowBox[{
+        "ImageCases", " ", "outputs", " ", "an", " ", "association", " ", 
+         "of", " ", "how", " ", "many", " ", "instances", " ", "of", " ", 
+         "an", " ", "Entity", " ", "are", " ", "detected", " ", "in", " ", 
+         "image"}], "*)"}], "\[IndentingNewLine]", 
+       RowBox[{"imageContents", "=", 
+        RowBox[{"ImageCases", "[", 
+         RowBox[{"image", ",", 
+          RowBox[{"Entity", "[", 
+           RowBox[{"\"\<Concept\>\"", ",", "\"\<Person::93r37\>\""}], "]"}], 
+          ",", 
+          RowBox[{"AcceptanceThreshold", "->", ".25"}]}], "]"}]}], ";", 
+       "\[IndentingNewLine]", 
+       RowBox[{"(*", 
+        RowBox[{
+        "Takes", " ", "the", " ", "amount", " ", "of", " ", "instances", " ", 
+         "in", " ", "imageContent"}], "*)"}], "\[IndentingNewLine]", 
+       RowBox[{"numCars", "=", 
+        RowBox[{"Length", "[", "imageContents", "]"}]}], ";", 
+       "\[IndentingNewLine]", 
+       RowBox[{"(*", 
+        RowBox[{
+        "Boxes", " ", "highlights", " ", "the", " ", "entities", " ", 
+         "detected", " ", "on", " ", "the", " ", "photo"}], "*)"}], 
+       "\[IndentingNewLine]", 
+       RowBox[{"boxes", " ", "=", " ", 
+        RowBox[{"ImageBoundingBoxes", "[", 
+         RowBox[{"image", ",", " ", 
+          RowBox[{"Entity", "[", 
+           RowBox[{"\"\<Concept\>\"", ",", "\"\<Person::93r37\>\""}], "]"}], 
+          ",", 
+          RowBox[{"AcceptanceThreshold", "->", ".25"}]}], "]"}]}], ";", 
+       "\[IndentingNewLine]", 
+       RowBox[{"(*", 
+        RowBox[{
+        "Uses", " ", "the", " ", "boxes", " ", "function", " ", "to", " ", 
+         "put", " ", "the", " ", "boxes", " ", "around", " ", "the", " ", 
+         "entities"}], "*)"}], "\[IndentingNewLine]", 
+       RowBox[{"instances", " ", "=", " ", 
+        RowBox[{"HighlightImage", "[", 
+         RowBox[{"image", ",", " ", "boxes"}], "]"}]}], ";", 
+       "\[IndentingNewLine]", 
+       RowBox[{"Return", "[", 
+        RowBox[{"{", 
+         RowBox[{"numCars", ",", "instances"}], "}"}], "]"}], ";"}]}], 
+     "]"}]}], ";"}], "\n"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"carCount", "=", 
+    RowBox[{"Table", "[", 
+     RowBox[{
+      RowBox[{
+       RowBox[{
+        RowBox[{"{", 
+         RowBox[{"count", ",", "img"}], "}"}], "=", 
+        RowBox[{"countCars", "[", "]"}]}], ";", "\[IndentingNewLine]", 
+       RowBox[{"Pause", "[", "2", "]"}], ";", "\[IndentingNewLine]", 
+       RowBox[{"{", 
+        RowBox[{"count", ",", "img"}], "}"}]}], ",", 
+      RowBox[{"{", "10", "}"}]}], "]"}]}], ";"}], 
+  "\n"}], "\[IndentingNewLine]", 
+ RowBox[{"Manipulate", "[", "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{"DynamicModule", "[", 
+    RowBox[{
+     RowBox[{"{", "pictureTaken", "}"}], ",", "\[IndentingNewLine]", "\t", 
+     RowBox[{
+      RowBox[{"pictureTaken", "=", 
+       RowBox[{"carCount", "[", 
+        RowBox[{"[", 
+         RowBox[{"counter", ",", "2"}], "]"}], "]"}]}], ";", 
+      "\[IndentingNewLine]", 
+      RowBox[{"Column", "[", "\[IndentingNewLine]", "\t", 
+       RowBox[{"{", 
+        RowBox[{
+         RowBox[{"ListPlot", "[", "\[IndentingNewLine]", "\t", 
+          RowBox[{
+           RowBox[{"carCount", "[", 
+            RowBox[{"[", 
+             RowBox[{"All", ",", "1"}], "]"}], "]"}], ",", 
+           "\[IndentingNewLine]", "\t", 
+           RowBox[{"PlotLabel", "->", "\"\<Number of People Detected\>\""}], 
+           ",", "\[IndentingNewLine]", "\t", 
+           RowBox[{"AxesLabel", "->", 
+            RowBox[{"{", 
+             RowBox[{"\"\<Count\>\"", ",", "\"\<People Count\>\""}], "}"}]}], 
+           ",", "\[IndentingNewLine]", "\t", 
+           RowBox[{"Joined", "->", "True"}], ",", 
+           RowBox[{"Mesh", "->", "Full"}]}], "]"}], "\[IndentingNewLine]", 
+         "\t", ",", "pictureTaken"}], "}"}], "]"}]}]}], "]"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"counter", ",", "1", ",", 
+     RowBox[{"Length", "[", "carCount", "]"}], ",", "1", ",", 
+     RowBox[{"Appearance", "->", "\"\<Labeled\>\""}]}], "}"}]}], 
+  "]"}]}], "Input",
+ CellChangeTimes->{{3.893792991575549*^9, 3.8937930179208207`*^9}, {
+  3.89379316988492*^9, 3.893793172978524*^9}},
+ CellLabel->"In[6]:=",ExpressionUUID->"b7801a46-997b-4e05-b951-090566279ab1"],
+
+Cell[BoxData[""], "Input",
+ CellChangeTimes->{{3.8937932403287725`*^9, 
+  3.8937932412257586`*^9}},ExpressionUUID->"79770b8c-a7ed-4969-9ca4-\
+e7cec3ca62cf"]
+}, Open  ]]
+}, Open  ]]
+},
+WindowSize->{1428., 743.25},
+WindowMargins->{{-6, Automatic}, {Automatic, -6}},
+FrontEndVersion->"13.2 for Microsoft Windows (64-bit) (November 18, 2022)",
+StyleDefinitions->"Default.nb",
+ExpressionUUID->"51c9bb62-311b-49ca-afa3-a5b4fe6f8ce8"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[CellGroupData[{
+Cell[580, 22, 167, 3, 98, "Title",ExpressionUUID->"2044a546-48ea-4bcf-b44f-6b54f3d6151f"],
+Cell[CellGroupData[{
+Cell[772, 29, 161, 3, 67, "Section",ExpressionUUID->"f17b306a-9ce9-4462-beab-27668c0e0b01"],
+Cell[936, 34, 1698, 29, 288, "Text",ExpressionUUID->"e09b0343-fd54-4394-8aac-58bd6af0c822"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[2671, 68, 163, 3, 67, "Section",ExpressionUUID->"a2eb2bf7-7e87-4c16-b8db-8e6e19d69b70"],
+Cell[2837, 73, 2163, 34, 449, "Text",ExpressionUUID->"f13a3fbf-57f0-4c9c-b665-2307ca10b608"],
+Cell[5003, 109, 3067, 70, 295, "Input",ExpressionUUID->"363f98f5-ac09-46e6-a185-671563d14a9a"],
+Cell[CellGroupData[{
+Cell[8095, 183, 163, 3, 54, "Subsection",ExpressionUUID->"a7d0900d-8c12-49ab-af26-4008c8996067"],
+Cell[8261, 188, 1209, 25, 288, "Text",ExpressionUUID->"f8a8926b-5836-4fc3-8cd8-847341c73499"],
+Cell[9473, 215, 2017, 49, 276, "Input",ExpressionUUID->"b475ff0f-0b92-4a68-9d3e-1fc612af2953"]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[11539, 270, 161, 3, 67, "Section",ExpressionUUID->"ddfcb3f8-af6b-4ec7-956f-0042963a8cad"],
+Cell[11703, 275, 1966, 31, 311, "Text",ExpressionUUID->"5115e663-febc-49e0-9870-d0920d11d5e2"],
+Cell[13672, 308, 2033, 39, 351, "Input",ExpressionUUID->"d95e4cd8-58c6-4c7b-8ee6-e403c2ce256d"],
+Cell[CellGroupData[{
+Cell[15730, 351, 189, 3, 54, "Subsection",ExpressionUUID->"5e167a21-a9c2-4e99-a47a-f2d93adefa4f"],
+Cell[15922, 356, 2082, 34, 311, "Text",ExpressionUUID->"6a0afb2a-2a21-4b50-b060-4b5bf0cc4f87"]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[18053, 396, 159, 3, 67, "Section",ExpressionUUID->"e4756f87-10a0-45ec-9244-017d05f0a4f6"],
+Cell[18215, 401, 288, 6, 35, "Text",ExpressionUUID->"633cda0b-4b78-4a12-baa2-ceeb1926cb57"],
+Cell[18506, 409, 6177, 147, 676, "Input",ExpressionUUID->"b7801a46-997b-4e05-b951-090566279ab1"],
+Cell[24686, 558, 156, 3, 28, "Input",ExpressionUUID->"79770b8c-a7ed-4969-9ca4-e7cec3ca62cf"]
+}, Open  ]]
+}, Open  ]]
+}
+]
+*)
+
